@@ -23,6 +23,11 @@ abstract class TestCase extends Orchestra
     {
         // In tests is dit package wél eigenaar van het schema, anders draaien de
         // migraties niet.
+
+        $app['config']->set('rv-mail.owns_schema', true);
+        $app['config']->set('queue.default', 'null');
+        $app['config']->set('database.default', 'testing');
+
         $app['config']->set('rv-mail.owns_schema', true);
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [

@@ -27,7 +27,8 @@ use RvWaarloos\RvMail\Enums\BatchState;
  * @property Carbon|null $dispatched_at
  * @property Carbon|null $polled_at
  * @property int $attempts
- */
+ * @property Carbon $created_at
+ * @property Carbon $updated_at*/
 final class CampaignBatch extends Model
 {
     use HasUlids;

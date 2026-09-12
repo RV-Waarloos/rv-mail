@@ -78,22 +78,31 @@ final class QuotaGuard
 
     public function record(int $emails, bool $transactional = false, int $apiRequests = 0, int $bulkRequests = 0): void
     {
-        $entry = QuotaLedgerEntry::query()->firstOrCreate(
-            ['date' => Carbon::now()->toDateString()],
-        );
+        $date = Carbon::now()->toDateString();
 
-        $entry->increment('emails_sent', $emails);
+        // Geen firstOrCreate: die doet SELECT-dan-INSERT en twee workers die op
+        // dezelfde dag een batch afronden botsen dan op de unieke index.
+        QuotaLedgerEntry::query()->insertOrIgnore([
+            'date' => $date,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
 
-        if ($transactional) {
-            $entry->increment('emails_transactional', $emails);
+        $increments = array_filter([
+            'emails_sent' => $emails,
+            'emails_transactional' => $transactional ? $emails : 0,
+            'api_requests' => $apiRequests,
+            'bulk_requests' => $bulkRequests,
+        ], static fn (int $value): bool => $value > 0);
+
+        if ($increments === []) {
+            return;
         }
 
-        if ($apiRequests > 0) {
-            $entry->increment('api_requests', $apiRequests);
-        }
+        $query = QuotaLedgerEntry::query()->where('date', $date);
 
-        if ($bulkRequests > 0) {
-            $entry->increment('bulk_requests', $bulkRequests);
+        foreach ($increments as $column => $value) {
+            $query->clone()->increment($column, $value);
         }
     }
 

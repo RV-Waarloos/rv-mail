@@ -50,6 +50,7 @@ return [
         'api_key' => env('MAILERSEND_API_KEY'),
         'webhook_secret' => env('RV_MAIL_WEBHOOK_SECRET'),
         'dry_run' => env('RV_MAIL_DRY_RUN', false),
+        'timeout' => (int) env('RV_MAIL_TIMEOUT', 30),
     ],
 
     /*

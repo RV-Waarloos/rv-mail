@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace RvWaarloos\RvMail\Campaigns;
 
-use ArrayIterator;
 use Illuminate\Contracts\Auth\Access\Authorizable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Iterator;
 use RvWaarloos\RvMail\Audiences\AudienceRegistry;
 use RvWaarloos\RvMail\Contracts\SuppressionStore;
 use RvWaarloos\RvMail\Enums\CampaignStatus;
@@ -71,7 +69,7 @@ final class CampaignComposer
 
         $suppressionReasons = $this->suppressions->reasonsFor(
             array_map(
-                static fn(RecipientCandidate $candidate): string => $candidate->normalizedEmail(),
+                static fn (RecipientCandidate $candidate): string => $candidate->normalizedEmail(),
                 $candidates,
             ),
         );
@@ -136,7 +134,7 @@ final class CampaignComposer
         }
 
         $emails = array_map(
-            static fn(RecipientCandidate $candidate): string => $candidate->normalizedEmail(),
+            static fn (RecipientCandidate $candidate): string => $candidate->normalizedEmail(),
             $candidates,
         );
 

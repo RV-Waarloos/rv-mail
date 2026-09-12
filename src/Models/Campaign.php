@@ -167,6 +167,6 @@ final class Campaign extends Model implements AuditableContract
      */
     public function tags(): array
     {
-        return ['campaign:' . $this->ulid, 'cat:' . $this->category->value];
+        return ['campaign:'.$this->ulid, 'cat:'.$this->category->value];
     }
 }
