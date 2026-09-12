@@ -1,0 +1,29 @@
+version: 2
+
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # Dev-tooling mag gegroepeerd: die PR's wil je niet één per week per package.
+    groups:
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - 'larastan/*'
+          - 'laravel/pint'
+          - 'pestphp/*'
+          - 'phpstan/*'
+          - 'orchestra/testbench'
+    ignore:
+      # Major bumps van het framework horen een bewuste beslissing te zijn,
+      # geen automatische PR.
+      - dependency-name: illuminate/support
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

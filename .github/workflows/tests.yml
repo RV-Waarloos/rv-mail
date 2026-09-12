@@ -3,8 +3,8 @@ name: tests
 on:
   push:
     branches:
-      - main
-      - '*.x'
+      - mainx
+      - "*.x"
   pull_request:
 
 permissions:
