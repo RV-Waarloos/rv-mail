@@ -23,9 +23,10 @@
         "owen-it/laravel-auditing": "^14.0"
     },
     "require-dev": {
+        "filament/filament": "^5.0",
         "larastan/larastan": "^3.9",
-        "laravel/pint": "^1.29",
         "laravel/pao": "^1.0",
+        "laravel/pint": "^1.29",
         "orchestra/testbench": "^10.0||^11.0",
         "pestphp/pest": "^4.6||^5.0",
         "pestphp/pest-plugin-laravel": "^4.1||^5.0",
