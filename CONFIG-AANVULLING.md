@@ -1,33 +1,32 @@
-# Aanvulling op config/rv-mail.php
+# Aanvullingen op config/rv-mail.php
 
-Fase 4 voegt een `webhook`-blok toe. Plaats het onder het `mailersend`-blok:
+## Vervang het bestaande `unsubscribe`-blok
 
 ```php
-    /*
-    |--------------------------------------------------------------------------
-    | Webhook
-    |--------------------------------------------------------------------------
-    |
-    | Alleen de app die de webhook host zet `register_route` op true. In de
-    | andere apps zou de route een tweede publiek endpoint openen waar
-    | MailerSend nooit naartoe wijst.
-    |
-    | De ontvangende app heeft minReplicas 1 nodig: schaalt hij naar nul, dan
-    | botst de eerste call van een piek op een cold start.
-    |
-    */
-
-    'webhook' => [
-        'register_route' => env('RV_MAIL_WEBHOOK_ROUTE', false),
-        'path' => env('RV_MAIL_WEBHOOK_PATH', 'webhooks/mailersend'),
+    'unsubscribe' => [
+        'register_routes' => env('RV_MAIL_UNSUBSCRIBE_ROUTES', false),
+        'path' => env('RV_MAIL_UNSUBSCRIBE_PATH', 'uitschrijven'),
+        'route' => 'rv-mail.unsubscribe',
+        'fallback_route' => 'rv-mail.unsubscribe.request',
     ],
 ```
 
-En in de `.env` van de app die hem host, logischerwijs `rv-auth`:
+## Voeg toe
 
-```dotenv
-RV_MAIL_WEBHOOK_ROUTE=true
-RV_MAIL_WEBHOOK_SECRET=   # uit het MailerSend-dashboard
+```php
+    'transactional' => [
+        // Logt mail die buiten de campagnepijplijn om verstuurd wordt, zodat
+        // het beheerscherm één overzicht toont in plaats van twee.
+        'log' => env('RV_MAIL_LOG_TRANSACTIONAL', true),
+    ],
 ```
 
-In `tests/TestCase.php` hoeft niets: de webhooktest zet de vlag zelf.
+## In de .env van de publieke app
+
+```dotenv
+RV_MAIL_UNSUBSCRIBE_ROUTES=true
+```
+
+Zet dit op dezelfde app als de webhookroute. De uitschrijfpagina moet publiek
+bereikbaar zijn, en de URL komt in elke nieuwsbrief te staan — kies het domein
+dus bewust, want hij blijft jaren geldig.

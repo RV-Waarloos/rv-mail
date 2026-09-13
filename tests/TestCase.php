@@ -24,6 +24,10 @@ abstract class TestCase extends Orchestra
         // In tests is dit package wél eigenaar van het schema, anders draaien de
         // migraties niet.
 
+        $app['config']->set('app.locale', 'nl');
+        $app['config']->set('app.fallback_locale', 'nl');
+        $app['config']->set('rv-mail.unsubscribe.register_routes', true);
+
         $app['config']->set('rv-mail.webhook.register_route', true);
         $app['config']->set('rv-mail.mailersend.webhook_secret', 'test-signing-secret');
 

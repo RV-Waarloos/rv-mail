@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace RvWaarloos\RvMail;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use RvWaarloos\RvMail\Audiences\AudienceRegistry;
 use RvWaarloos\RvMail\Audiences\DistributionListAudience;
 use RvWaarloos\RvMail\Campaigns\BladeCampaignRenderer;
+use RvWaarloos\RvMail\Console\AnonymizeMemberCommand;
+use RvWaarloos\RvMail\Console\PurgeCommand;
 use RvWaarloos\RvMail\Console\QuotaCommand;
 use RvWaarloos\RvMail\Console\ReconcileCommand;
 use RvWaarloos\RvMail\Console\SimulateEventCommand;
@@ -16,6 +20,7 @@ use RvWaarloos\RvMail\Contracts\AudienceScopeResolver;
 use RvWaarloos\RvMail\Contracts\BulkTransport;
 use RvWaarloos\RvMail\Contracts\CampaignRenderer;
 use RvWaarloos\RvMail\Contracts\SuppressionStore;
+use RvWaarloos\RvMail\Listeners\LogTransactionalMail;
 use RvWaarloos\RvMail\Support\EloquentSuppressionStore;
 use RvWaarloos\RvMail\Support\QuotaGuard;
 use RvWaarloos\RvMail\Support\UnrestrictedScopeResolver;
@@ -64,12 +69,16 @@ final class RvMailServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'rv-mail');
 
         $this->registerWebhookRoute();
+        $this->registerUnsubscribeRoutes();
+        $this->registerTransactionalLogging();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
                 QuotaCommand::class,
                 ReconcileCommand::class,
                 SimulateEventCommand::class,
+                PurgeCommand::class,
+                AnonymizeMemberCommand::class,
             ]);
 
             $this->publishes([
@@ -155,6 +164,35 @@ final class RvMailServiceProvider extends ServiceProvider
             $schedule->command('rv-mail:reconcile')
                 ->hourly()
                 ->withoutOverlapping();
+            $schedule->command('rv-mail:purge')
+                ->dailyAt('03:30')
+                ->withoutOverlapping();
         });
+    }
+
+    /**
+     * De uitschrijfpagina moet publiek bereikbaar zijn en de URL blijft jaren
+     * geldig, dus registreer hem op de app waarvan het domein stabiel is.
+     */
+    private function registerUnsubscribeRoutes(): void
+    {
+        if (config('rv-mail.unsubscribe.register_routes') !== true) {
+            return;
+        }
+
+        $this->loadRoutesFrom(__DIR__.'/../routes/unsubscribe.php');
+    }
+
+    /**
+     * Zonder deze listener zie je in het beheerscherm alleen de mailings, en
+     * niet dat het paswoordherstel van een lid al drie keer bouncet.
+     */
+    private function registerTransactionalLogging(): void
+    {
+        if (config('rv-mail.transactional.log') !== true) {
+            return;
+        }
+
+        Event::listen(MessageSent::class, LogTransactionalMail::class);
     }
 }

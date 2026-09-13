@@ -202,6 +202,8 @@ return [
     */
 
     'unsubscribe' => [
+        'register_routes' => env('RV_MAIL_UNSUBSCRIBE_ROUTES', false),
+        'path' => env('RV_MAIL_UNSUBSCRIBE_PATH', 'uitschrijven'),
         'route' => 'rv-mail.unsubscribe',
         'fallback_route' => 'rv-mail.unsubscribe.request',
     ],
@@ -223,6 +225,12 @@ return [
     'webhook' => [
         'register_route' => env('RV_MAIL_WEBHOOK_ROUTE', false),
         'path' => env('RV_MAIL_WEBHOOK_PATH', 'webhooks/mailersend'),
+    ],
+
+    'transactional' => [
+        // Logt mail die buiten de campagnepijplijn om verstuurd wordt, zodat
+        // het beheerscherm één overzicht toont in plaats van twee.
+        'log' => env('RV_MAIL_LOG_TRANSACTIONAL', true),
     ],
 
 ];
