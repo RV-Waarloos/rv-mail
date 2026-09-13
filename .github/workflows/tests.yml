@@ -3,7 +3,7 @@ name: tests
 on:
   push:
     branches:
-      - mainx
+      - main
       - "*.x"
   pull_request:
 

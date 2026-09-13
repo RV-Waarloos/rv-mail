@@ -206,4 +206,23 @@ return [
         'fallback_route' => 'rv-mail.unsubscribe.request',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook
+    |--------------------------------------------------------------------------
+    |
+    | Alleen de app die de webhook host zet `register_route` op true. In de
+    | andere apps zou de route een tweede publiek endpoint openen waar
+    | MailerSend nooit naartoe wijst.
+    |
+    | De ontvangende app heeft minReplicas 1 nodig: schaalt hij naar nul, dan
+    | botst de eerste call van een piek op een cold start.
+    |
+    */
+
+    'webhook' => [
+        'register_route' => env('RV_MAIL_WEBHOOK_ROUTE', false),
+        'path' => env('RV_MAIL_WEBHOOK_PATH', 'webhooks/mailersend'),
+    ],
+
 ];

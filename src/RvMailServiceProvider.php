@@ -11,6 +11,7 @@ use RvWaarloos\RvMail\Audiences\DistributionListAudience;
 use RvWaarloos\RvMail\Campaigns\BladeCampaignRenderer;
 use RvWaarloos\RvMail\Console\QuotaCommand;
 use RvWaarloos\RvMail\Console\ReconcileCommand;
+use RvWaarloos\RvMail\Console\SimulateEventCommand;
 use RvWaarloos\RvMail\Contracts\AudienceScopeResolver;
 use RvWaarloos\RvMail\Contracts\BulkTransport;
 use RvWaarloos\RvMail\Contracts\CampaignRenderer;
@@ -21,6 +22,7 @@ use RvWaarloos\RvMail\Support\UnrestrictedScopeResolver;
 use RvWaarloos\RvMail\Transport\BatchChunker;
 use RvWaarloos\RvMail\Transport\FakeBulkTransport;
 use RvWaarloos\RvMail\Transport\MailerSendBulkTransport;
+use RvWaarloos\RvMail\Webhooks\SignatureVerifier;
 
 final class RvMailServiceProvider extends ServiceProvider
 {
@@ -41,6 +43,12 @@ final class RvMailServiceProvider extends ServiceProvider
         $this->app->bind(QuotaGuard::class, static fn (): QuotaGuard => QuotaGuard::forCurrentPeriod());
         $this->app->bind(BatchChunker::class, static fn (): BatchChunker => BatchChunker::fromConfig());
 
+        $this->app->singleton(SignatureVerifier::class, static function (): SignatureVerifier {
+            $secret = config('rv-mail.mailersend.webhook_secret');
+
+            return new SignatureVerifier(is_string($secret) ? $secret : '');
+        });
+
         $this->registerTransport();
     }
 
@@ -55,10 +63,13 @@ final class RvMailServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'rv-mail');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'rv-mail');
 
+        $this->registerWebhookRoute();
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 QuotaCommand::class,
                 ReconcileCommand::class,
+                SimulateEventCommand::class,
             ]);
 
             $this->publishes([
@@ -76,6 +87,20 @@ final class RvMailServiceProvider extends ServiceProvider
 
         $this->registerBuiltInAudiences();
         $this->registerSchedule();
+    }
+
+    /**
+     * Alleen de app die de webhook host registreert de route. In de andere
+     * apps zou hij een tweede publiek endpoint openen zonder dat MailerSend
+     * er ooit naartoe wijst.
+     */
+    private function registerWebhookRoute(): void
+    {
+        if (config('rv-mail.webhook.register_route') !== true) {
+            return;
+        }
+
+        $this->loadRoutesFrom(__DIR__.'/../routes/webhooks.php');
     }
 
     /**
