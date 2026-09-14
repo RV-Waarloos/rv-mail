@@ -53,6 +53,12 @@ function fakeAudience(array $candidates): Audience
         {
             return true;
         }
+
+        /** @param array<string, mixed> $params */
+        public function describe(array $params): string
+        {
+            return 'Testdoelgroep';
+        }
     };
 }
 

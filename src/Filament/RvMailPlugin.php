@@ -7,6 +7,7 @@ namespace RvWaarloos\RvMail\Filament;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use RvWaarloos\RvMail\Filament\Resources\Campaigns\CampaignResource;
+use RvWaarloos\RvMail\Filament\Resources\DistributionLists\DistributionListResource;
 use RvWaarloos\RvMail\Filament\Resources\Suppressions\SuppressionResource;
 use RvWaarloos\RvMail\Filament\Widgets\DeliveryIssuesWidget;
 use RvWaarloos\RvMail\Filament\Widgets\QuotaWidget;
@@ -46,6 +47,7 @@ final class RvMailPlugin implements Plugin
     {
         $panel->resources([
             CampaignResource::class,
+            DistributionListResource::class,
             SuppressionResource::class,
         ]);
 

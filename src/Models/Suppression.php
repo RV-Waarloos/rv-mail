@@ -19,6 +19,8 @@ use RvWaarloos\RvMail\Enums\SuppressionReason;
  */
 final class Suppression extends Model
 {
+    protected $connection = 'central';
+
     protected $table = 'mail_suppressions';
 
     protected $guarded = [];

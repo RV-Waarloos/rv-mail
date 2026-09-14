@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class DistributionListMember extends Model
 {
+    protected $connection = 'central';
+
     protected $table = 'mail_distribution_list_members';
 
     protected $guarded = [];

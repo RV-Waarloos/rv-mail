@@ -39,6 +39,8 @@ final class CampaignRecipient extends Model
 {
     use HasUlids;
 
+    protected $connection = 'central';
+
     protected $table = 'mail_campaign_recipients';
 
     protected $guarded = [];

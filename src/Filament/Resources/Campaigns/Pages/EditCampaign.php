@@ -8,6 +8,7 @@ use Filament\Actions\Action;
 use Filament\Resources\Pages\EditRecord;
 use RvWaarloos\RvMail\Filament\Actions\CampaignActions;
 use RvWaarloos\RvMail\Filament\Resources\Campaigns\CampaignResource;
+use RvWaarloos\RvMail\Filament\Resources\Campaigns\Schemas\CampaignForm;
 
 final class EditCampaign extends EditRecord
 {
@@ -25,5 +26,23 @@ final class EditCampaign extends EditRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('view', ['record' => $this->getRecord()]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return CampaignForm::expandAudienceParams($data);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return CampaignForm::collectAudienceParams($data);
     }
 }

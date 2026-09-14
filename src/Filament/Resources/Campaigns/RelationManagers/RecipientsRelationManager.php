@@ -83,4 +83,10 @@ final class RecipientsRelationManager extends RelationManager
     {
         return auth()->user()?->can('rv-mail.campaign.view') ?? false;
     }
+
+    /** @return array<string, string> */
+    protected function getListeners(): array
+    {
+        return ['refreshRelation' => '$refresh'];
+    }
 }

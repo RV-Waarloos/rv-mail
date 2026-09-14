@@ -33,7 +33,7 @@ final class PurgeCommand extends Command
 
         foreach ($targets as $label => $target) {
             $cutoff = Carbon::now()->subDays($target['days']);
-            $query = DB::table($target['table'])->where($target['column'], '<', $cutoff);
+            $query = DB::connection('central')->table($target['table'])->where($target['column'], '<', $cutoff);
 
             if ($dryRun) {
                 $this->components->twoColumnDetail(

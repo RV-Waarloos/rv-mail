@@ -21,6 +21,8 @@ use RvWaarloos\RvMail\Enums\MailCategory;
  */
 final class Unsubscribe extends Model
 {
+    protected $connection = 'central';
+
     protected $table = 'mail_unsubscribes';
 
     protected $guarded = [];

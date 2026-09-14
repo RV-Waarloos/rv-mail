@@ -20,7 +20,16 @@ abstract class AbstractAudience implements Audience
         protected readonly AudienceScopeResolver $scopes,
     ) {}
 
-    /** @return array<string, array{type: string, label: string, required: bool}> */
+    /**
+     * @return array<string, array{
+     *     type: 'select'|'multiselect'|'text'|'number',
+     *     label: string,
+     *     required: bool,
+     *     options?: array<int|string, string>,
+     *     helper?: string,
+     *     default?: int|string|null
+     * }>
+     */
     public function parameterSchema(): array
     {
         return [];
@@ -32,5 +41,44 @@ abstract class AbstractAudience implements Audience
     public function authorize(Authorizable $user, array $params): bool
     {
         return $this->scopes->scopesFor($user)->allows($this->key(), $params);
+    }
+
+    /**
+     * Standaard: de gekozen waarden opzoeken in de opties van het schema.
+     * Doelgroepen met een rijkere beschrijving overschrijven dit.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public function describe(array $params): string
+    {
+        $parts = [];
+
+        foreach ($this->parameterSchema() as $name => $spec) {
+            $value = $params[$name] ?? null;
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $options = $spec['options'] ?? [];
+            $values = is_array($value) ? $value : [$value];
+
+            $labels = array_map(
+                static function (mixed $item) use ($options): string {
+                    if (! is_int($item) && ! is_string($item)) {
+                        return '?';
+                    }
+
+                    return (string) ($options[$item] ?? $item);
+                },
+                $values,
+            );
+
+            $parts[] = implode(', ', $labels);
+        }
+
+        return $parts === []
+            ? $this->label()
+            : $this->label().': '.implode(' — ', $parts);
     }
 }

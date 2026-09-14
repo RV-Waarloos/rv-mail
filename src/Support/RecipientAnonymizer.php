@@ -38,8 +38,8 @@ final class RecipientAnonymizer
 
         // Suppressies en uitschrijvingen van dit lid verdwijnen: zonder adres
         // hebben ze geen functie meer, en ze bewaren zou het doel voorbijschieten.
-        DB::table('mail_suppressions')->where('member_id', $memberId)->delete();
-        DB::table('mail_unsubscribes')->where('member_id', $memberId)->delete();
+        DB::connection('central')->table('mail_suppressions')->where('member_id', $memberId)->delete();
+        DB::connection('central')->table('mail_unsubscribes')->where('member_id', $memberId)->delete();
 
         return $rows->count();
     }

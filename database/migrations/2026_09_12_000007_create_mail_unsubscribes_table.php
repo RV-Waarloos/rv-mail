@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    public function getConnection(): ?string
+    {
+        return 'central';
+    }
+
     /**
      * Granulair per categorie: iemand kan het clubnieuws afzetten zonder de
      * permanentie-oproepen te missen. Enkel categorieën die op gerechtvaardigd

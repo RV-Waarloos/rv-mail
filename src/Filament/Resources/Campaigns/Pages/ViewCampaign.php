@@ -19,7 +19,9 @@ final class ViewCampaign extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            // EditAction::make(),
+            EditAction::make()
+                ->visible(static fn (Campaign $record): bool => $record->status->canCompose()),
             CampaignActions::sendTest(),
             CampaignActions::compose(),
             CampaignActions::approve(),

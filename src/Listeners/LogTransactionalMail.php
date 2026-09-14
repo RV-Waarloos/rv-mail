@@ -76,7 +76,7 @@ final class LogTransactionalMail
             'sent_at' => Carbon::now(),
         ]);
 
-        DB::table('mail_campaigns')->where('id', $campaign->id)->increment('count_sent');
+        DB::connection('central')->table('mail_campaigns')->where('id', $campaign->id)->increment('count_sent');
     }
 
     /**

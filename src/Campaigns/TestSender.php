@@ -4,25 +4,32 @@ declare(strict_types=1);
 
 namespace RvWaarloos\RvMail\Campaigns;
 
-use Illuminate\Mail\Message;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use RvWaarloos\RvMail\Contracts\BulkTransport;
 use RvWaarloos\RvMail\Contracts\CampaignRenderer;
 use RvWaarloos\RvMail\Models\Campaign;
 use RvWaarloos\RvMail\Models\CampaignRecipient;
+use RvWaarloos\RvMail\Support\QuotaGuard;
+use RvWaarloos\RvMail\Transport\BulkBatch;
+use RvWaarloos\RvMail\Transport\BulkMessage;
 
 /**
  * Verstuurt één testmail naar de opsteller.
  *
- * Bewust niet via de bulkpijplijn: die maakt batches aan, boekt quotum en zet
- * bestemmelingen op queued. Een testverzending mag de campagne niet aanraken.
+ * Loopt via hetzelfde BulkTransport als de campagnepijplijn, niet via de
+ * Laravel mailer. Dat scheelt een mailconfiguratie in elke app die alleen
+ * mailings opstelt maar ze niet zelf verstuurt, en het test meteen het transport
+ * dat straks ook de echte mailing verstuurt.
  *
- * De placeholders worden hier wél ingevuld, anders krijg je een mail met
- * letterlijk `{{aanspreking}}` erin en heb je niet gezien wat een lid ziet.
+ * De campagne blijft onaangeroerd: geen batchrij, geen statuswijziging, geen
+ * bestemmelingen die op queued gaan.
  */
 final class TestSender
 {
     public function __construct(
         private readonly CampaignRenderer $renderer,
+        private readonly BulkTransport $transport,
+        private readonly QuotaGuard $quota,
     ) {}
 
     /**
@@ -33,18 +40,33 @@ final class TestSender
         $rendered = $this->renderer->render($campaign);
         $data = $this->previewData($campaign, $overrides);
 
-        $html = $this->substitute($rendered->html, $data);
-        $subject = $this->substitute($rendered->subject, $data);
+        $message = new BulkMessage(
+            // Geen id: deze verzending hoort bij geen enkele bestemmeling.
+            recipientId: 0,
+            recipientUlid: 'test',
+            email: $to,
+            name: null,
+            subject: '[TEST] ' . $this->substitute($rendered->subject, $data),
+            html: $this->substitute($rendered->html, $data),
+            text: $this->substitute($rendered->text, $data),
+            // Personalisatie is hier al ingevuld: een test met letterlijk
+            // {{aanspreking}} erin laat niet zien wat een lid ziet.
+            personalization: [],
+            tags: [...$campaign->tags(), 'test:1'],
+        );
 
-        Mail::html($html, function (Message $message) use ($to, $subject, $campaign): void {
-            $message->to($to)
-                ->subject('[TEST] '.$subject)
-                ->from($campaign->from_email, $campaign->from_name);
+        $this->transport->send(new BulkBatch(
+            record: null,
+            messages: [$message],
+            from: ['address' => $campaign->from_email, 'name' => $campaign->from_name],
+            replyTo: $campaign->reply_to ?? (string) config('rv-mail.reply_to'),
+            trackClicks: false,
+            requestUlid: (string) Str::ulid(),
+        ));
 
-            if ($campaign->reply_to !== null && $campaign->reply_to !== '') {
-                $message->replyTo($campaign->reply_to);
-            }
-        });
+        // Een testmail kost een credit, dus hij hoort in het ledger. Anders
+        // loopt de eigen telling scheef tegenover het MailerSend-dashboard.
+        $this->quota->record(emails: 1, transactional: true, apiRequests: 1);
     }
 
     /**
@@ -65,6 +87,9 @@ final class TestSender
         $defaults = [
             'aanspreking' => 'Jan',
             'voornaam' => 'Jan',
+            'achternaam' => 'Peeters',
+            'afdeling' => 'U15',
+            'lidnummer' => '0000',
             'unsubscribe_url' => '#voorbeeld-uitschrijflink',
         ];
 
@@ -81,7 +106,7 @@ final class TestSender
                 continue;
             }
 
-            $content = str_replace('{{'.$key.'}}', (string) $value, $content);
+            $content = str_replace('{{' . $key . '}}', (string) $value, $content);
         }
 
         return $content;

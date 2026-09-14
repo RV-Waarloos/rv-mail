@@ -252,7 +252,7 @@ final class ProcessWebhookEvent implements ShouldQueue
             return;
         }
 
-        DB::table('mail_campaigns')
+        DB::connection('central')->table('mail_campaigns')
             ->where('id', $campaignId)
             ->increment($column);
     }

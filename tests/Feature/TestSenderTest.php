@@ -3,14 +3,15 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Mail;
 use RvWaarloos\RvMail\Campaigns\TestSender;
+use RvWaarloos\RvMail\Contracts\BulkTransport;
 use RvWaarloos\RvMail\Enums\CampaignStatus;
 use RvWaarloos\RvMail\Enums\MailCategory;
 use RvWaarloos\RvMail\Enums\RecipientStatus;
 use RvWaarloos\RvMail\Models\Campaign;
 use RvWaarloos\RvMail\Models\CampaignRecipient;
-use Symfony\Component\Mime\Email;
+use RvWaarloos\RvMail\Models\QuotaLedgerEntry;
+use RvWaarloos\RvMail\Transport\FakeBulkTransport;
 
 function testCampagne(MailCategory $categorie = MailCategory::Nieuws): Campaign
 {
@@ -29,8 +30,8 @@ function testCampagne(MailCategory $categorie = MailCategory::Nieuws): Campaign
 }
 
 beforeEach(function (): void {
-    config()->set('mail.default', 'array');
-    config()->set('rv-mail.transactional.log', false);
+    $this->transport = new FakeBulkTransport;
+    $this->app->instance(BulkTransport::class, $this->transport);
 });
 
 it('vult de placeholders in bij een testverzending', function (): void {
@@ -46,31 +47,31 @@ it('vult de placeholders in bij een testverzending', function (): void {
 
     app(TestSender::class)->send($campaign, 'opsteller@rvwaarloos.be');
 
-    $sent = Mail::mailer()->getSymfonyTransport()->messages();
-
-    $email = $sent[0]->getOriginalMessage();
-
-    expect($email)->toBeInstanceOf(Email::class);
-
-    $body = (string) $email->getHtmlBody();
+    $message = $this->transport->sentMessages()[0];
 
     // Een test met letterlijk {{aanspreking}} erin laat je niet zien wat een
     // lid ziet, en dat is het hele punt van een testverzending.
-    expect($body)->not->toContain('{{aanspreking}}')
-        ->and($body)->toContain('Mieke');
+    expect($message->html)->not->toContain('{{aanspreking}}')
+        ->and($message->html)->toContain('Mieke')
+        ->and($message->email)->toBe('opsteller@rvwaarloos.be');
 });
 
 it('markeert de testmail als test in het onderwerp', function (): void {
     app(TestSender::class)->send(testCampagne(), 'opsteller@rvwaarloos.be');
 
-    $sent = Mail::mailer()->getSymfonyTransport()->messages();
+    expect($this->transport->sentMessages()[0]->subject)->toStartWith('[TEST]');
+});
 
-    expect($sent[0]->getOriginalMessage()->getSubject())->toStartWith('[TEST]');
+it('loopt door hetzelfde transport als een echte mailing', function (): void {
+    app(TestSender::class)->send(testCampagne(), 'opsteller@rvwaarloos.be');
+
+    // Zo hoeft een app die alleen mailings opstelt geen mailer te configureren,
+    // en test je meteen het transport dat straks de echte mailing verstuurt.
+    expect($this->transport->totalSent())->toBe(1)
+        ->and($this->transport->sentBatches()[0]->isStandalone())->toBeTrue();
 });
 
 it('raakt de campagne niet aan bij een testverzending', function (): void {
-    Mail::fake();
-
     $campaign = testCampagne();
 
     CampaignRecipient::query()->create([
@@ -81,20 +82,33 @@ it('raakt de campagne niet aan bij een testverzending', function (): void {
 
     app(TestSender::class)->send($campaign, 'opsteller@rvwaarloos.be');
 
-    // Geen batches, geen statuswijziging, geen quotum op de campagne.
     expect($campaign->fresh()->status)->toBe(CampaignStatus::Composed)
         ->and($campaign->batches()->count())->toBe(0)
         ->and(CampaignRecipient::query()->where('status', RecipientStatus::Pending)->count())->toBe(1);
 });
 
+it('boekt de testmail in het quotum', function (): void {
+    app(TestSender::class)->send(testCampagne(), 'opsteller@rvwaarloos.be');
+
+    // Een testmail kost een credit; anders loopt de eigen telling scheef
+    // tegenover het MailerSend-dashboard.
+    expect(QuotaLedgerEntry::query()->first()->emails_sent)->toBe(1);
+});
+
 it('valt terug op voorbeeldwaarden zonder bestemmelingen', function (): void {
     app(TestSender::class)->send(testCampagne(), 'opsteller@rvwaarloos.be');
 
-    $sent = Mail::mailer()->getSymfonyTransport()->messages();
+    expect($this->transport->sentMessages()[0]->html)->not->toContain('{{aanspreking}}');
+});
 
-    $html = (string) $sent[0]->getOriginalMessage()->getHtmlBody();
-    preg_match_all('/\{\{[^}]+\}\}/', $html, $m);
-    dump($m[0]);
+it('zet klikregistratie uit op een testverzending', function (): void {
+    $campaign = testCampagne();
+    $campaign->forceFill(['track_clicks' => true])->save();
 
-    expect($html)->not->toContain('{{aanspreking}}');
+    app(TestSender::class)->send($campaign->fresh(), 'opsteller@rvwaarloos.be');
+
+    $payload = $this->transport->sentBatches()[0]->toPayload()[0];
+
+    expect($payload['settings']['track_clicks'])->toBeFalse()
+        ->and($payload['settings']['track_opens'])->toBeFalse();
 });

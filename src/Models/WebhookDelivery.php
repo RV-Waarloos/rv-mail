@@ -21,6 +21,8 @@ use Illuminate\Support\Carbon;
  */
 final class WebhookDelivery extends Model
 {
+    protected $connection = 'central';
+
     protected $table = 'mail_webhook_deliveries';
 
     protected $guarded = [];

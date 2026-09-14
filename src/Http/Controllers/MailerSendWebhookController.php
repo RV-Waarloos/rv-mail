@@ -30,7 +30,7 @@ final class MailerSendWebhookController
 
         // insertOrIgnore laat de database de gelijktijdigheid oplossen: twee
         // identieke leveringen tegelijk mogen niet tot twee rijen leiden.
-        $inserted = DB::table('mail_webhook_deliveries')->insertOrIgnore([
+        $inserted = DB::connection('central')->table('mail_webhook_deliveries')->insertOrIgnore([
             'ms_event_id' => $payload->eventId,
             'type' => $payload->type,
             'signature_valid' => true,

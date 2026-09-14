@@ -22,9 +22,21 @@ interface Audience
     public function label(): string;
 
     /**
-     * Beschrijving van de parameters voor de UI.
+     * Beschrijving van de parameters, waaruit het formulier zijn velden bouwt.
      *
-     * @return array<string, array{type: string, label: string, required: bool}>
+     * Het formulier kent geen enkele doelgroep: een nieuwe audience in de
+     * club-app verschijnt vanzelf met de juiste velden zodra ze hier beschreven
+     * staan. Levert dit een lege array op, dan heeft de doelgroep geen
+     * parameters nodig — zoals "alle actieve leden".
+     *
+     * @return array<string, array{
+     *     type: 'select'|'multiselect'|'text'|'number',
+     *     label: string,
+     *     required: bool,
+     *     options?: array<int|string, string>,
+     *     helper?: string,
+     *     default?: int|string|null
+     * }>
      */
     public function parameterSchema(): array;
 
@@ -44,4 +56,14 @@ interface Audience
      * @param  array<string, mixed>  $params
      */
     public function authorize(Authorizable $user, array $params): bool;
+
+    /**
+     * Beschrijft de gekozen parameters in mensentaal, voor het overzicht en het
+     * preflight-scherm.
+     *
+     * "Distributielijst" zegt niets; "Distributielijst: Eetfestijn 2026" wel.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public function describe(array $params): string;
 }

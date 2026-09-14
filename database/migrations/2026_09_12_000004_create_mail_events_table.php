@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    public function getConnection(): ?string
+    {
+        return 'central';
+    }
+
     /**
      * Append-only. Dit is de bron van waarheid voor opvolging: MailerSend bewaart
      * op het Hobby plan maar 24 uur activity-data.

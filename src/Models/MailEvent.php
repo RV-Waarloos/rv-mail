@@ -28,6 +28,8 @@ final class MailEvent extends Model
 {
     public $timestamps = false;
 
+    protected $connection = 'central';
+
     protected $table = 'mail_events';
 
     protected $guarded = [];

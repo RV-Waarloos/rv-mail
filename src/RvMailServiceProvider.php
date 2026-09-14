@@ -19,9 +19,11 @@ use RvWaarloos\RvMail\Console\SimulateEventCommand;
 use RvWaarloos\RvMail\Contracts\AudienceScopeResolver;
 use RvWaarloos\RvMail\Contracts\BulkTransport;
 use RvWaarloos\RvMail\Contracts\CampaignRenderer;
+use RvWaarloos\RvMail\Contracts\MemberDirectory;
 use RvWaarloos\RvMail\Contracts\SuppressionStore;
 use RvWaarloos\RvMail\Listeners\LogTransactionalMail;
 use RvWaarloos\RvMail\Support\EloquentSuppressionStore;
+use RvWaarloos\RvMail\Support\NullMemberDirectory;
 use RvWaarloos\RvMail\Support\QuotaGuard;
 use RvWaarloos\RvMail\Support\UnrestrictedScopeResolver;
 use RvWaarloos\RvMail\Transport\BatchChunker;
@@ -55,6 +57,8 @@ final class RvMailServiceProvider extends ServiceProvider
         });
 
         $this->registerTransport();
+
+        $this->app->bind(MemberDirectory::class, NullMemberDirectory::class);
     }
 
     public function boot(): void

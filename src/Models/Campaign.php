@@ -52,6 +52,8 @@ final class Campaign extends Model implements AuditableContract
     use Auditable;
     use HasUlids;
 
+    protected $connection = 'central';
+
     protected $table = 'mail_campaigns';
 
     protected $guarded = [];

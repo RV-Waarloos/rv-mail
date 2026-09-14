@@ -58,6 +58,11 @@ final class CampaignActions
                 }
 
                 Notification::make()->success()->title('Samengesteld')->body($body)->send();
+            })
+            ->after(static function (\Livewire\Component $livewire): void {
+                // De bestemmelingentabel is een aparte Livewire-component en
+                // weet niet dat het samenstellen rijen heeft weggeschreven.
+                $livewire->dispatch('refreshRelation');
             });
     }
 

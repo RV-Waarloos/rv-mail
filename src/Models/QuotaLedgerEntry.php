@@ -17,6 +17,8 @@ use Illuminate\Support\Carbon;
  */
 final class QuotaLedgerEntry extends Model
 {
+    protected $connection = 'central';
+
     protected $table = 'mail_quota_ledger';
 
     protected $guarded = [];

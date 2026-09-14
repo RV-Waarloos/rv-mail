@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    public function getConnection(): ?string
+    {
+        return 'central';
+    }
+
     public function up(): void
     {
         Schema::create('mail_distribution_lists', function (Blueprint $table): void {

@@ -6,6 +6,7 @@ namespace RvWaarloos\RvMail\Filament\Resources\Campaigns\Pages;
 
 use Filament\Resources\Pages\CreateRecord;
 use RvWaarloos\RvMail\Filament\Resources\Campaigns\CampaignResource;
+use RvWaarloos\RvMail\Filament\Resources\Campaigns\Schemas\CampaignForm;
 
 final class CreateCampaign extends CreateRecord
 {
@@ -21,7 +22,7 @@ final class CreateCampaign extends CreateRecord
         $data['from_email'] = config('rv-mail.from.address');
         $data['from_name'] = config('rv-mail.from.name');
 
-        return $data;
+        return CampaignForm::collectAudienceParams($data);
     }
 
     protected function getRedirectUrl(): string

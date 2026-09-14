@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    public function getConnection(): ?string
+    {
+        return 'central';
+    }
+
     /**
      * MailerSend telt per rollend venster van 30 dagen en biedt geen API om het
      * verbruik op te vragen. Dit is de eigen teller; het periodeverbruik is de
